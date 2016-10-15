@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1"
+    tools:context=".MainActivity"
+    android:background="#000000">
+
+    <MediaController
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/mediaController"
+        android:layout_gravity="right" />
+
+    <TextView
+        android:layout_width="247dp"
+        android:layout_height="wrap_content"
+        android:text="3D World"
+        android:id="@+id/TITLE"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="0.15"
+        android:layout_marginTop="150dp"
+        android:textAlignment="center"
+        android:textSize="40dp"
+        android:textColor="#ff0000" />
+
+    <Button
+        android:layout_width="282dp"
+        android:layout_height="wrap_content"
+        android:text="@string/start"
+        android:id="@+id/START"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="50dp"
+        android:layout_weight="0.09"
+        android:textColor="@color/abc_primary_text_material_light"
+        android:background="#498d3a"
+        android:textSize="30dp"
+         />
+
+</LinearLayout>
