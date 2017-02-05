@@ -99,8 +99,8 @@ public class LoadingActivity extends AppCompatActivity {
         super.onBackPressed();
         questSound.stop();
         Intent intent = new Intent(LoadingActivity.this, MainActivity.class);
-        finish();;
+        finish();
         startActivity(intent);
     }
-    }
 }
+
