@@ -19,21 +19,19 @@ public class Figure {
     boolean startedPlay;
     public  Scalar color1;
     public  Scalar color2;
-    int colorModel;
     boolean detected;
 
 
-    Figure(MediaPlayer sound, MediaPlayer questSound, Scalar col1, Scalar col2) {
-        this(sound, questSound, 0, col1, col2);
+    Figure(MediaPlayer sound, Scalar col1, Scalar col2) {
+        this(sound, 0, col1, col2);
     }
 
-    Figure(MediaPlayer sound, MediaPlayer questSound, int verticles, Scalar col1, Scalar col2)
+    Figure(MediaPlayer sound, int verticles, Scalar col1, Scalar col2)
     {
         this.sound = sound;
         this.verticles = verticles;
         this.color1 = col1;
         this.color2 = col2;
-        this.questSound = questSound;
         detected = false;
         startedPlay = false;
     }

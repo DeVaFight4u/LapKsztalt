@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,35 +8,69 @@
     tools:context=".MainActivity"
     android:background="#000000">
 
-    <MediaController
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/mediaController"
-        android:layout_gravity="right" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/background_light">
 
-    <TextView
-        android:layout_width="247dp"
-        android:layout_height="wrap_content"
-        android:text="3D World"
-        android:id="@+id/TITLE"
-        android:layout_gravity="center_horizontal"
-        android:layout_weight="0.15"
-        android:layout_marginTop="150dp"
-        android:textAlignment="center"
-        android:textSize="40dp"
-        android:textColor="#ff0000" />
+        <MediaController
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/mediaController"
+            android:layout_gravity="right" />
 
-    <Button
-        android:layout_width="282dp"
-        android:layout_height="wrap_content"
-        android:text="@string/start"
-        android:id="@+id/START"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="50dp"
-        android:layout_weight="0.09"
-        android:textColor="@color/abc_primary_text_material_light"
-        android:background="#498d3a"
-        android:textSize="30dp"
-         />
+        <TextView
+            android:text="@string/samouczek"
+            android:layout_height="wrap_content"
+            android:id="@+id/samouczekText"
+            android:textColor="@android:color/black"
+            android:fontFamily="monospace"
+            android:foregroundGravity="right"
+            android:gravity="end"
+            android:layout_width="160dp"
+            android:textAlignment="viewEnd"
+            android:layout_weight="0.12"
+            android:textSize="20sp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:textColorHighlight="@android:color/black"
+            android:textColorHint="@android:color/black" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@android:drawable/presence_online"
+            android:id="@+id/samouczekButton"
+            android:layout_alignParentBottom="true"
+            android:layout_alignLeft="@+id/samouczekText"
+            android:layout_alignStart="@+id/samouczekText"
+            android:layout_marginLeft="11dp"
+            android:layout_marginStart="11dp"
+            android:layout_alignTop="@+id/samouczekText" />
+
+        <Button
+            android:layout_width="282dp"
+            android:layout_height="wrap_content"
+            android:text="@string/start"
+            android:id="@+id/START"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="0.09"
+            android:textColor="@color/abc_primary_text_material_light"
+            android:background="#498d3a"
+            android:textSize="30dp"
+            android:layout_marginBottom="48dp"
+            android:layout_above="@+id/samouczekText"
+            android:layout_centerHorizontal="true" />
+
+        <ImageView
+            app:srcCompat="@drawable/logo"
+            android:id="@+id/imageView"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/START"
+            android:layout_alignRight="@+id/START"
+            android:layout_alignEnd="@+id/START" />
+    </RelativeLayout>
 
 </LinearLayout>

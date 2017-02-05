@@ -22,36 +22,32 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+
+
+import static com.example.asus.opencvtest.ShapeState.*;
 
 public class AppActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private static final String TAG = "OCVSample::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
+    TimeCounting timeCounting;
+    TimeCounting catchingShapeTime;
     Mat imgDestination;
     Mat imgOriginal;
     Mat intermediate;
     List<MatOfPoint> List_points;
-    figura figure;
     Scalar colors[];
     boolean readToDraw[];
-    boolean start;
-    boolean timeEnd;
-    boolean notRandom;
-    boolean afterSound;
+    boolean detectEnd;
+    boolean chosenShape;
     int bgr_hsv, bgr_gray;
-    MediaPlayer sound1;
-    MediaPlayer sound2;
-    MediaPlayer sound3;
-    MediaPlayer questSound1;
-    MediaPlayer questSound2;
-    MediaPlayer questSound3;
+    MediaPlayer sound;
     long time1;
     Figure shape;
     boolean isFound;
-    long tempTime;
+    boolean catchShape;
+    long detectedTime;
     android.graphics.Point screenSize;
     Display display;
     int widthdp;
@@ -117,68 +113,66 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
 
         imgDestination = new Mat();
         intermediate = new Mat();
-        colors = new Scalar[]{new Scalar(110, 150, 125), new Scalar(179,255,255), new Scalar(20, 150, 125),
-                new Scalar (40, 255, 255), new Scalar(0, 180, 180), new Scalar(20, 255, 255), new Scalar(80, 100, 100), new Scalar(100,255,255)};
+        colors = new Scalar[]{new Scalar(110, 150, 125), new Scalar(130,255,255), new Scalar(80, 120, 140),
+                new Scalar (100, 255, 255), new Scalar(0, 130, 130), new Scalar(20, 255, 255), new Scalar(80, 100, 100), new Scalar(100,255,255)};
         readToDraw = new boolean[]{false, false, false, false, false};
         List_points = new ArrayList<MatOfPoint>();
         bgr_gray = Imgproc.COLOR_BGR2GRAY;
         bgr_hsv = Imgproc.COLOR_BGR2HSV;
-        figure = null;
+        catchingShapeTime = new TimeCounting();
         screenSize = new android.graphics.Point();
         display = this.getWindowManager().getDefaultDisplay();
         width = display.getWidth();
         widthdp = (int)(width/getResources().getDisplayMetrics().density);
-        notRandom = false;
-        afterSound = false;
+        timeCounting = new TimeCounting();
+        chosenShape = false;
+        catchShape = false;
     }
 
     public void onCameraViewStopped()
     {
        imgOriginal.release();
         imgDestination.release();
-        sound1.release();
-        sound2.release();
-        sound3.release();
+        sound.release();
     }
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
         imgOriginal = inputFrame.rgba();
         List<MatOfPoint> List_contours = new ArrayList<MatOfPoint>();
-        if(!start) {
-
-            if(!notRandom) {
-                figure = chooseShape();
-                notRandom = true;
+        if(!detectEnd) {
+            if(!chosenShape) {
+                chooseShape();
+                time1 = System.currentTimeMillis();
+                chosenShape = true;
             }
-            if(!shape.isStartedPlay())
-            {
-                shape.questSoundPlay();
-            }
-            if(!shape.questSound.isPlaying()) {
-                if(!afterSound) {
-                    time1 = System.currentTimeMillis();
-                    afterSound = true;
-                }
-                tempTime = counting(time1, 5);
-                Imgproc.putText(imgOriginal, "START ZA: " + tempTime, new Point(imgOriginal.width() / 4, imgOriginal.height() / 2), Core.FONT_HERSHEY_TRIPLEX,
-                        2, new Scalar(255, 255, 255));
-            }
-        }
-        if(!timeEnd&&start) {
             if (!isFound) {
-                convertMat(imgOriginal, imgDestination, colors[0], colors[1]);
-                if(figure==figura.KOLO)
+                convertMat(imgOriginal, imgDestination, shape.color1, shape.color2);
+                if(LoadingActivity.getShapeState()==KOLO)
                 {
                     findCircles(imgOriginal, imgDestination);
                 }
                 else
                     findAndDrawPoints(List_contours, imgDestination, imgOriginal);
             }
-            Imgproc.putText(imgOriginal, "POZOSTALO: " + (counting(time1, 30)), new Point(0, 40), Core.FONT_HERSHEY_SIMPLEX, 2, new Scalar(255, 255, 255));
+            timeCounting.counting(time1, 30);
+            if(shape.detected)
+            {
+                if(!catchShape) {
+                    detectedTime = System.currentTimeMillis();
+                    catchShape = true;
+                }
+
+            }
+            if(catchShape)
+            {
+                detectedTime();
+            }
+            Imgproc.putText(imgOriginal, "POZOSTALO: " + (timeCounting.getWaitTime()), new Point(0, 40), Core.FONT_HERSHEY_SIMPLEX, 2, new Scalar(255, 255, 255));
+            isEndTime(timeCounting);
         }
         Restart();
 
-    return imgOriginal;
+        return imgOriginal;
     }
 
     void convertMat(Mat img, Mat dst, Scalar color1, Scalar color2) // konwertuje macierze kolorow
@@ -189,7 +183,7 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
         Core.inRange(dst, color1, color2, dst);
         Imgproc.GaussianBlur(dst, dst, new Size(9,9), 2, 2);
 
-        if(figure != figura.KOLO)
+        if(LoadingActivity.getShapeState() != KOLO)
             Imgproc.Canny(dst, dst, 200, 100);
 
 
@@ -214,6 +208,8 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
                 MatOfPoint points = new MatOfPoint(approxCurve.toArray());
                 pt2.add(points);
                 try {
+                    if(points.height()==0)
+                        shape.detected=false;
                     drawShapes(img, pt2, points.height(), points);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -243,14 +239,10 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
             int radius = (int)circleCoordinates[2];
             if(Math.PI*Math.pow(radius,2)>Math.pow(widthdp/3.0,2.0)) {
                 Imgproc.circle(img, center, radius, color, 4);
-                circleFound = true;
+                shape.detected = true;
             }
         }
-        if(circleFound) {
-            shape.detected = true;
-            isFound = true;
-            shape.SoundPlay();
-        }
+
     }
 
     void drawShapes(Mat img, List<MatOfPoint> point, int verticles, MatOfPoint pts) throws InterruptedException // ile wierzcholkow taka figure rysuje
@@ -261,7 +253,7 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
                  {
                      if(verticles==shape.verticles) {
                             normalDraw(img, point, new Scalar(255, 255, 0), pts);
-                            shape.SoundPlay();
+
                         }
 
                         break;
@@ -270,10 +262,13 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
                      if(verticles==shape.verticles)
                      {
                          normalDraw(img, point, new Scalar(255, 255, 0), pts);
-                         shape.SoundPlay();
+
                      }
                      break;
                  }
+                 default:
+                     shape.detected = false;
+                     break;
                  }
     }
        // }
@@ -281,81 +276,83 @@ public class AppActivity extends AppCompatActivity implements CameraBridgeViewBa
     void normalDraw(Mat img, List<MatOfPoint> pt, Scalar color, MatOfPoint pts) // rysowanie figur
     {
         shape.detected = true;
-        if(figure == figura.KWADRAT) {
+        if(LoadingActivity.getShapeState() == KWADRAT) {
             Rect rect = Imgproc.boundingRect(pts);
             Imgproc.rectangle(img, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), color, 4);
         }
         Imgproc.polylines(img, pt, true, color, 4);
         pt.clear();
-        isFound = true;
+
 
     }
-    enum figura // stany losowan
+
+    void chooseShape() // wybieranie co ma byc losowane
     {
-        TROJKAT, KWADRAT, KOLO
-    }
-    figura chooseShape() // wybieranie co ma byc losowane
-    {
-        Random generator = new Random();
-        int figure = generator.nextInt(3);
-        figura fig = null;
+        ShapeState figure = null;
+        figure = LoadingActivity.getShapeState();
+        Log.i("czy idziesz tu", "ok");
         switch (figure)
         {
-            case 0: {
-                fig = figura.TROJKAT;
-                sound1 = MediaPlayer.create(this, R.raw.czworoscian);
-                questSound1 = MediaPlayer.create(this, R.raw.quest_trojkat);
-                shape= new Figure(sound1, questSound1, 3, colors[0], colors[1]);
+            case TROJKAT: {
+
+                sound = MediaPlayer.create(this, R.raw.trojkat);
+                shape= new Figure(sound, 3, colors[4], colors[5]);
+                Log.i("czy idziesz tu", "ok1");
                 break;
             }
-            case 1: {
-                fig = figura.KWADRAT;
-                sound2 = MediaPlayer.create(this, R.raw.szescian);
-                questSound2 = MediaPlayer.create(this, R.raw.quest_kwadrat);
-                shape = new Figure(sound2, questSound2, 4, colors[0], colors[1]);
+            case KWADRAT: {
+
+                sound = MediaPlayer.create(this, R.raw.kwadrat);
+                shape = new Figure(sound, 4, colors[0], colors[1]);
+                Log.i("czy idziesz tu", "ok2");
 
                 break;
             }
-            case 2: {
-                fig = figura.KOLO;
-                sound3 = MediaPlayer.create(this, R.raw.sfera);
-                questSound3 = MediaPlayer.create(this, R.raw.quest_kolo);
-                shape = new Figure(sound3, questSound3, colors[0], colors[1]);
+            case KOLO: {
+
+                sound = MediaPlayer.create(this, R.raw.kolo);
+                shape = new Figure(sound, colors[2], colors[3]);
+                Log.i("czy idziesz tu", "ok3");
                 break;
             }
         }
-        return fig;
+
     }
-    long counting(long currentTime, int wait)
-    {
-        long time = wait-(System.currentTimeMillis()/1000-(currentTime/1000));
-        isEndTime(time);
-        return time;
+    void detectedTime() {
+
+        catchingShapeTime.counting(detectedTime, 5);
+        if(!shape.detected&&detectedTime-System.currentTimeMillis()>3000)
+        {
+            catchShape = false;
+        }
+        else {
+            isEndTime(catchingShapeTime);
+        }
     }
-    void isEndTime(long time)
+    void isEndTime(TimeCounting timeCounting)
     {
-        if((time<=0 && !shape.questSound.isPlaying())|| isFound) {
-            if(!start) {
-                start = true;
-                time1 = System.currentTimeMillis();
+        if(timeCounting.getWaitTime()<=0) {
+            if (!detectEnd) {
+                isFound = true;
+                detectEnd = true;
             }
-            else if (!timeEnd)
-                timeEnd=true;
+        }
+        else if(isFound) {
+            detectEnd = true;
+            shape.SoundPlay();
         }
     }
     void loadBools()
     {
-        start = false;
-        timeEnd = false;
+        detectEnd = false;
         isFound =false;
-        afterSound = false;
-        notRandom = false;
+        chosenShape = false;
     }
     void Restart()
     {
-        if(!shape.sound.isPlaying()&&(timeEnd||isFound))
+        if(!shape.sound.isPlaying()&&(detectEnd ||isFound))
         {
-            Intent intent = getIntent();
+            Intent intent = new Intent(AppActivity.this, MainActivity.class);
             finish();
             startActivity(intent);
         }
